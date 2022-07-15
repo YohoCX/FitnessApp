@@ -1,0 +1,10 @@
+{
+  "name": "trainingApp",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "repository": "https://github.com/YohoCX/trainingApp.git",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.7.4"
+  }
+}
