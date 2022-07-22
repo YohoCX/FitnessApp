@@ -1,10 +1,10 @@
-import { DatabaseClient, ServiceProps } from "../types";
-import { ExtendedDatabase } from "../db";
+import {DatabaseClient, ServiceProps} from "../types";
+import {ExtendedDatabase} from "../db";
 import config from "../config";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Errors from "../modules/errors";
-import { randomSixDigit } from "../modules/helpers";
+import {randomSixDigit} from "../modules/helpers";
 // import transporter from "../modules/helpers/nodemailer";
 
 
@@ -46,7 +46,7 @@ export default class AuthService {
         try {
             return await this.db.tx(async transaction => {
                 const theUser = await transaction.oneOrNone(
-                    await transaction.user.query.getOneUserByUsername(email)
+                    await transaction.user.query.getOneUserByEmail(email)
                 )
 
                 if (theUser) {
@@ -78,18 +78,54 @@ export default class AuthService {
                     await transaction.user.query.getVerificationCode(id)
                 )
 
-                if (theVerificationCode.verification_code != verificationCode || theVerificationCode.verification_expired) {
+                console.log(theVerificationCode)
+
+                if (!theVerificationCode) {
+                    Errors.userNotExist()
+                }
+
+                if (theVerificationCode.verification_expired) {
+                    Errors.verificationCodeExpired()
+                }
+
+                if (theVerificationCode.email_verification_code != verificationCode) {
                     Errors.verificationCodeDontMatch()
                 }
 
-                await transaction.user.query.userEmailVerification(id)
+                await transaction.oneOrNone(await transaction.user.query.userEmailVerification(id))
 
                 let token = jwt.sign({id: id}, config.session_secret);
+
+                console.log(token)
 
                 await transaction.oneOrNone(await transaction.auth.query.createSession(id, token));
 
                 return {token};
 
+            })
+        } catch (e) {
+            return e
+        }
+    }
+
+    updateVerificationCode = async (id: number) => {
+        try {
+            return await this.db.tx(async transaction => {
+                if (!await transaction.oneOrNone(await transaction.user.query.getOneUserById(id))) {
+                    Errors.userNotExist()
+                }
+
+                const userVerified = await transaction.one(await transaction.user.query.checkUserEmailVerified(id))
+
+                if (userVerified.email_verified) {
+                    Errors.userAlreadyVerified()
+                }
+
+                const verificationCode = randomSixDigit()
+
+                await transaction.oneOrNone(await transaction.user.query.updateVerificationCode(id, verificationCode))
+
+                return null
             })
         } catch (e) {
             return e

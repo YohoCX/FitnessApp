@@ -1,6 +1,24 @@
 import CustomError from "./CustomError";
 
 const Errors = {
+    verificationCodeExpired: () => {
+      throw new CustomError({
+          statusCode: 400,
+          message: "code expired",
+          description: "verification code expired",
+          fields: []
+      })
+    },
+
+    userAlreadyVerified: () =>{
+      throw  new CustomError({
+          statusCode: 400,
+          message: "user verified",
+          description: "user already verified, check route",
+          fields: []
+      })
+    },
+
     notExists: (fields: string[]) => {
         throw new CustomError({
             statusCode: 404,

@@ -23,7 +23,7 @@ export default class UserService {
     getOneUserByEmail = async (email: string) => {
         try {
             return await this.db.oneOrNone(
-                await this.db.user.query.getOneUserByUsername(email),
+                await this.db.user.query.getOneUserByEmail(email),
             );
         } catch (e) {
             throw e;
